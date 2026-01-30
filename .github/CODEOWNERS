@@ -1,0 +1,9 @@
+# GitHub CODEOWNERS file
+# These owners will be requested for review when someone opens a pull request
+# that modifies code that they own.
+
+# Workflow files require security team review
+.github/workflows/ @chaitanyakrishna
+
+# All other changes need your approval
+* @chaitanyakrishna
