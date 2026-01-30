@@ -1,0 +1,65 @@
+# GitHub Actions workflow for deploying Dumpster Fire Dice App to Azure App Service
+# Uses Federated Identity Credentials (OIDC) for secure, secretless authentication
+
+name: Deploy to Azure App Service
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: 'dumpster-fire-chaitanyakrishna'  # Update this!
+  PYTHON_VERSION: '3.11'
+
+# Required for OIDC authentication
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up Python
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Run basic validation (ensure app can be imported)
+      - name: Validate application
+        run: |
+          python -c "from app import app; print('✅ App imports successfully')"
+
+      # Login to Azure using OIDC (Federated Identity Credentials)
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Deploy to Azure App Service
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          
+      - name: Deployment complete
+        run: |
+          echo "🗑️🔥 Dumpster Fire Dice App deployed successfully!"
+          echo "🌐 Visit: https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
